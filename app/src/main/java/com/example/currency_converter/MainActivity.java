@@ -9,140 +9,136 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+//import androidx.core.widget.;
 
-public class MainActivity extends AppCompatActivity {
-    private Spinner spinnerFrom,spinnerTO;
-    private EditText editTextFrom, editTextTO;
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
-    private  final  double[][] conversationRates= {
-            {1,0.93,1.49,83.34,0.79,160.94,7.8,86.25},//for usd
-            {1.10,1,1.60,90,0.85,140,8.60,95},//for eur
-            {0.69,0.62,1,56,0.53,87,5.35,59},//for AUD
-            {0.012,0.011,0.018,1,0.0094,1.55,0.096,1.05},//for inr
-            {1.30,1.18,1.88,105,1,164,10.15,111},//for gbp
-            {0.0078,0.0071,0.011,0.64,0.0061,1,0.062,0.68},//for jpy
-            {0.13,0.12,0.19,10.5,0.098,16.13,1,11},//hkd
-            {0.010,0.0095,0.017,0.96,0.009,1.46,0.091,1}//rub
+    private Spinner spinner1, spinner2;
+    private EditText ed1, ed2;
+
+    private final String[] currencies = {"INR", "USD", "JPY", "RUB","GBP","AUD","CNY"
     };
-    private boolean isConverting=false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        spinnerFrom = findViewById(R.id.spinnerFrom);
-        spinnerTO = findViewById(R.id.spinnerTO);
-        editTextFrom = findViewById(R.id.editTextFrom);
-        editTextTO = findViewById(R.id.editTextTO);
 
-        ArrayAdapter<String> myAdapter = new ArrayAdapter<>(MainActivity.this,
-                android.R.layout.simple_list_item_1, getResources().getStringArray(R.array.currencies));
-        myAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerFrom.setAdapter(myAdapter);
-        spinnerTO.setAdapter(myAdapter);
+        spinner1 = findViewById(R.id.spinnerFrom);
+        spinner2 = findViewById(R.id.spinnerTO);
+        ed1 = findViewById(R.id.editTextFrom);
+        ed2 = findViewById(R.id.editTextTO);
 
+        spinner1.setOnItemSelectedListener(this);
+        spinner2.setOnItemSelectedListener(this);
 
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, currencies);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner1.setAdapter(adapter);
+        spinner2.setAdapter(adapter);
 
-        editTextFrom.addTextChangedListener(new TextWatcher() {
+        ed1.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
-            public void afterTextChanged(Editable editable) {
-                if(!isConverting) {
-                    convertCurrencyFrom();
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (ed1.isFocused()) {
+                    double amt = ed1.getText().toString().isEmpty() ? 0.0 : Double.parseDouble(ed1.getText().toString());
+                    double convertedCurrency = convertCurrency(amt, spinner1.getSelectedItem().toString(), spinner2.getSelectedItem().toString());
+                    ed2.setText(String.valueOf(convertedCurrency));
                 }
             }
         });
 
-        editTextTO.addTextChangedListener(new TextWatcher() {
+        ed2.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
             @Override
-            public void afterTextChanged(Editable editable) {
-                    if(!isConverting) {
-                        convertCurrencyTO();
-                    }
-            }
-        });
-        AdapterView.OnItemSelectedListener itemSelectedListener = new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                if(!isConverting){
-                  convertCurrencyFrom();
+            public void afterTextChanged(Editable s) {
+                if (ed2.isFocused()) {
+                    double amt = ed2.getText().toString().isEmpty() ? 0.0 : Double.parseDouble(ed2.getText().toString());
+                    double convertedCurrency = convertCurrency(amt, spinner2.getSelectedItem().toString(), spinner1.getSelectedItem().toString());
+                    ed1.setText(String.valueOf(convertedCurrency));
                 }
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {}
-        };
-
-        spinnerFrom.setOnItemSelectedListener(itemSelectedListener);
-        spinnerTO.setOnItemSelectedListener(itemSelectedListener);
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
         });
     }
 
-
-    public void convertCurrencyFrom(){
-        String fromValue=editTextFrom.getText().toString();
-        if(!fromValue.isEmpty()){
-            isConverting=true;
-            int fromIndex=spinnerFrom.getSelectedItemPosition();
-            int toIndex=spinnerTO.getSelectedItemPosition();
-            double fromAmount=Double.parseDouble(fromValue);
-            double conversationRate=conversationRates[fromIndex][toIndex];
-            double toAmount=fromAmount*conversationRate;
-            editTextTO.setText(String.format("%.3f",toAmount));
-            isConverting=false;
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        int sp1 = R.id.spinnerFrom;
+        int sp2=R.id.spinnerTO;
+        if(parent.getId()==R.id.spinnerFrom){
+            double amt1 = ed1.getText().toString().isEmpty() ? 0.0 : Double.parseDouble(ed1.getText().toString());
+                double convertedCurrency1 = convertCurrency(amt1, spinner1.getSelectedItem().toString(), spinner2.getSelectedItem().toString());
+                ed2.setText(String.valueOf(convertedCurrency1));
         }
-        else{
-            editTextTO.setText("");
+        else if(parent.getId() == R.id.spinnerTO){
+            double amt2 = ed2.getText().toString().isEmpty() ? 0.0 : Double.parseDouble(ed2.getText().toString());
+               double convertedCurrency2 = convertCurrency(amt2, spinner2.getSelectedItem().toString(), spinner1.getSelectedItem().toString());
+                ed1.setText(String.valueOf(convertedCurrency2));
+        }
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {}
+
+    private double convertCurrency(double amt, String firstCurrency, String secondCurrency) {
+        double indianRupee = convertOtherToIndianCurrency(amt, firstCurrency);
+        return convertIndianToOtherCurrency(indianRupee, secondCurrency);
+    }
+
+    private double convertIndianToOtherCurrency(double indianRupee, String secondCurrency) {
+        switch (secondCurrency) {
+            case "INR":
+                return indianRupee;
+            case "USD":
+                return indianRupee * 0.012;
+            case "JPY":
+                return indianRupee * 1.60;
+            case "RUB":
+                return indianRupee * 0.93;
+            case "GBP":
+                return indianRupee * 0.0095;
+            case "AUD":
+                return indianRupee * 0.018;
+            case "CNY":
+                return indianRupee * 0.0872;
+            default:
+                return 0.0;
         }
     }
 
-    public void convertCurrencyTO(){
-        String toValue=editTextTO.getText().toString();
-        if(!toValue.isEmpty()){
-            isConverting=true;
-            int fromIndex=spinnerFrom.getSelectedItemPosition();
-            int toIndex=spinnerTO.getSelectedItemPosition();
-            double toAmount=Double.parseDouble(toValue);
-            double conversationRate=conversationRates[toIndex][fromIndex];
-            double fromAmount=toAmount*conversationRate;
-            editTextFrom.setText(String.format("%.3f",fromAmount));
-            isConverting=false;
-        }
-        else{
-            editTextTO.setText("");
+    private double convertOtherToIndianCurrency(double amt, String firstCurrency) {
+        switch (firstCurrency) {
+            case "INR":
+                return amt;
+            case "USD":
+                return amt * 82.63;
+            case "JPY":
+                return amt * 0.62;
+            case "RUB":
+                return amt * 1.07;
+            case "GBP":
+                return amt * 105.4;
+            case "AUD":
+                return amt * 55.58;
+            case "CNY":
+                return amt * 11.4707;
+            default:
+                return 0.0;
         }
     }
+}
 
 
-
-
-    }
