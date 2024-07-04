@@ -1,6 +1,8 @@
 package com.example.currency_converter;
 
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -8,8 +10,11 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.Map;
 import retrofit2.Call;
@@ -25,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private final String[] currencies = {"INR", "USD", "JPY", "RUB", "GBP", "AUD", "CNY"};
     private boolean updating = false;
     private static final String API_KEY = "c06368765af9d0d6753733b5"; // Replace with your actual API key
-
+    private ImageButton refresher;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         ed2 = findViewById(R.id.editTextTO);
         t1 = findViewById(R.id.t1);
         t2 = findViewById(R.id.t2);
+        refresher=findViewById(R.id.imageButton);
         spinner1.setOnItemSelectedListener(this);
         spinner2.setOnItemSelectedListener(this);
 
@@ -86,6 +92,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             spinner1.setSelection(savedInstanceState.getInt("spinnerFrom"));
             spinner2.setSelection(savedInstanceState.getInt("spinnerTO"));
         }
+        refresher.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                syncExchangeRate();
+            }
+        });
+
     }
 
     @Override
@@ -156,6 +170,34 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         });
     }
+
+    private void syncExchangeRate() {
+        Call<ExchangeRateResponse> call = exchangeRateService.getLatestRates(API_KEY, spinner1.getSelectedItem().toString());
+        call.enqueue(new Callback<ExchangeRateResponse>() {
+            @Override
+            public void onResponse(Call<ExchangeRateResponse> call, Response<ExchangeRateResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Log.d("SyncExchangeRate", "Rates fetched successfully");
+                    // Refresh the UI or any other logic
+                    double amt = ed1.getText().toString().isEmpty() ? 0 : Double.parseDouble(ed1.getText().toString());
+                    convertCurrency(amt, spinner1.getSelectedItem().toString(), spinner2.getSelectedItem().toString(), true);
+                    Toast.makeText(MainActivity.this," Echange rate updated successfully",Toast.LENGTH_SHORT).show();
+                } else if (response.code() >= 400 && response.code() <= 499) {
+                    Toast.makeText(MainActivity.this, "API limit reached",Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.e("SyncExchangeRate", "Failed to fetch rates: " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ExchangeRateResponse> call, Throwable t) {
+                Log.e("SyncExchangeRate", "Error fetching rates: " + t.getMessage());
+            }
+        });
+    }
+
+
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
