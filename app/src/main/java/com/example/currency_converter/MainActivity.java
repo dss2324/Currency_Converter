@@ -9,13 +9,18 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.constraintlayout.widget.ConstraintLayout;
+
 import java.util.Map;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -26,11 +31,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private ExchangeRateService exchangeRateService;
     private Spinner spinner1, spinner2;
     private EditText ed1, ed2;
-    private TextView t1, t2;
+    private TextView t1, t2,t3;
     private final String[] currencies = {"INR", "USD", "JPY", "RUB", "GBP", "AUD", "CNY"};
     private boolean updating = false;
     private static final String API_KEY = "c06368765af9d0d6753733b5"; // Replace with your actual API key
     private ImageButton refresher;
+    private Switch sw1;
+    private ConstraintLayout mainlayout;
+    private boolean switchToogle = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +50,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         ed2 = findViewById(R.id.editTextTO);
         t1 = findViewById(R.id.t1);
         t2 = findViewById(R.id.t2);
+        t3=findViewById(R.id.textView2);
+        sw1=findViewById(R.id.switch1);
+        mainlayout=findViewById(R.id.main);
         refresher=findViewById(R.id.imageButton);
         spinner1.setOnItemSelectedListener(this);
         spinner2.setOnItemSelectedListener(this);
@@ -50,6 +61,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner1.setAdapter(adapter);
         spinner2.setAdapter(adapter);
+
+
 
         ed1.addTextChangedListener(new TextWatcher() {
             @Override
@@ -85,6 +98,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         });
 
+        sw1.setOnCheckedChangeListener((buttonView, isChecked) -> {
+
+            if (isChecked) {
+                switchToogle=true;
+                setDarkMode();
+            } else {
+                switchToogle=false;
+                setLightMode();
+            }
+        });
+
+
+
+
         if (savedInstanceState != null) {
             Log.d("MainActivity", "onCreate: Restoring state from savedInstanceState");
             ed1.setText(savedInstanceState.getString("editTextFrom"));
@@ -104,6 +131,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        if(switchToogle){
+            ((TextView) view).setTextColor(Color.WHITE);
+        }
         ed1.setText("0");
         ed2.setText("0");
         if (!updating) {
@@ -194,6 +224,33 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 Log.e("SyncExchangeRate", "Error fetching rates: " + t.getMessage());
             }
         });
+    }
+
+    private void setDarkMode() {
+//        final View rootView = getWindow().getDecorView();
+//        rootView.setBackgroundColor(Color.BLACK);
+        sw1.setBackgroundColor(Color.WHITE);
+        mainlayout.setBackgroundColor(Color.BLACK);
+        setTextColor(Color.WHITE);
+    }
+
+    private void setLightMode() {
+//        final View rootView = getWindow().getDecorView();
+//        rootView.setBackgroundColor(Color.WHITE);
+        sw1.setBackgroundColor(Color.rgb(90,9,172));
+        mainlayout.setBackgroundColor(Color.WHITE);
+        setTextColor(Color.BLACK);
+    }
+
+    private void setTextColor(int color) {
+        ed1.setTextColor(color);
+        ed2.setTextColor(color);
+        t1.setTextColor(color);
+        t2.setTextColor(color);
+        t3.setTextColor(color);
+        ((TextView) spinner1.getSelectedView()).setTextColor(color);
+        ((TextView) spinner2.getSelectedView()).setTextColor(color);
+
     }
 
 
