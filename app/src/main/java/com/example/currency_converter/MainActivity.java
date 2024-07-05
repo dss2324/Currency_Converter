@@ -1,5 +1,6 @@
 package com.example.currency_converter;
 
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -62,7 +63,19 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         spinner1.setAdapter(adapter);
         spinner2.setAdapter(adapter);
 
+        int[][] states = new int[][] {
+                new int[] { android.R.attr.state_checked }, // checked state
+                new int[] { -android.R.attr.state_checked } // unchecked state
+        };
 
+        int[] colors = new int[] {
+                Color.WHITE, // color for unchecked state
+                Color.rgb(105,105,105),
+
+        };
+
+        ColorStateList colorStateList = new ColorStateList(states, colors);
+        sw1.setTrackTintList(colorStateList);
 
         ed1.addTextChangedListener(new TextWatcher() {
             @Override
@@ -229,7 +242,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private void setDarkMode() {
 //        final View rootView = getWindow().getDecorView();
 //        rootView.setBackgroundColor(Color.BLACK);
-        sw1.setBackgroundColor(Color.WHITE);
+        sw1.setBackgroundColor(Color.BLACK);
         mainlayout.setBackgroundColor(Color.BLACK);
         setTextColor(Color.WHITE);
     }
@@ -237,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private void setLightMode() {
 //        final View rootView = getWindow().getDecorView();
 //        rootView.setBackgroundColor(Color.WHITE);
-        sw1.setBackgroundColor(Color.rgb(90,9,172));
+        sw1.setBackgroundColor(Color.WHITE);
         mainlayout.setBackgroundColor(Color.WHITE);
         setTextColor(Color.BLACK);
     }
